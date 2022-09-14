@@ -1,0 +1,18 @@
+
+server:
+  port: 8001
+  servlet:
+    context-path: /spring-custom-sqs-listener
+
+cloud:
+  aws:
+    region:
+      static: us-east-1
+    access-key: default_access_key
+    secret-key: default_secret_key
+    sqs:
+      batch-size: 10
+      pool-wait-time-sec: 20
+      fixed-pool-rate: 3000 # 3 second
+      parallel-processing: false
+      url: http://localhost:4566/000000000000/tutorial-queue

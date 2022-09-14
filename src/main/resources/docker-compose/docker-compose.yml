@@ -1,0 +1,12 @@
+services:
+  localstack:
+    container_name: localstack
+    image: localstack/localstack:1.1.0
+    ports:
+      - "4566-4599:4566-4599"
+    environment:
+      - SERVICES=sqs
+    volumes:
+      - ./init/scripts:/docker-entrypoint-initaws.d
+      - ./init/sqs-messages:/tmp/localstack/data/sqs-messages
+
