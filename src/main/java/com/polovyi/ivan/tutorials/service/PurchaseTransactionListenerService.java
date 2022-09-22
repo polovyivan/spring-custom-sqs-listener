@@ -66,9 +66,19 @@ public class PurchaseTransactionListenerService {
         if (!purchaseTransactionEntities.isEmpty()) {
             log.info("Saving {} purchase transaction(s)", purchaseTransactionEntities.size());
             purchaseTransactionRepository.saveAll(purchaseTransactionEntities);
+
+            List<Message> processed = messages.stream()
+                    .filter(m -> Boolean.parseBoolean(m.getAttributes().get("processed"))).toList();
+            processed.forEach(this::deleteMessage);
         }
 
-        log.info("<<<<<<Finished processing of {} message(s)>>>>>>", messages.size());
+        log.info("{}<<<<<<Finished processing of {} message(s)>>>>>>"
+                        + "{}<<<<<<{} message(s) processed successfully>>>>>>"
+                        + "{}<<<<<<Failed to process {} message(s). Returning message(s) back to the queue>>>>>>",
+                System.getProperty("line.separator"), messages.size(),
+                System.getProperty("line.separator"), purchaseTransactionEntities.size(),
+                System.getProperty("line.separator"), messages.size() - purchaseTransactionEntities.size());
+
     }
 
     private PurchaseTransactionEntity processMessage(Message message) {
@@ -80,7 +90,7 @@ public class PurchaseTransactionListenerService {
 
             createRewardPoints(purchaseTransactionEntity);
 
-            deleteMessage(message);
+            message.addAttributesEntry("processed", "true");
 
             return purchaseTransactionEntity;
 
