@@ -36,8 +36,8 @@ public class PurchaseTransactionListenerService {
     @Value("${cloud.aws.sqs.batch-size}")
     private Integer batchSize;
 
-    @Value("${cloud.aws.sqs.pool-wait-time-sec}")
-    private Integer poolWaitTimeInSeconds;
+    @Value("${cloud.aws.sqs.poll-wait-time-sec}")
+    private Integer pollWaitTimeInSeconds;
 
     @Value("${cloud.aws.sqs.parallel-processing}")
     private boolean isParallelProcessing;
@@ -45,12 +45,12 @@ public class PurchaseTransactionListenerService {
     private ObjectMapper mapper = new ObjectMapper()
             .registerModule(new JavaTimeModule());
 
-    @Scheduled(fixedRateString = "${cloud.aws.sqs.fixed-pool-rate}")
+    @Scheduled(fixedRateString = "${cloud.aws.sqs.fixed-poll-rate}")
     public void messageInBatchListener() {
         ReceiveMessageRequest receiveMessageRequest = new ReceiveMessageRequest(
                 tutorialSQS)
                 .withMaxNumberOfMessages(batchSize)
-                .withWaitTimeSeconds(poolWaitTimeInSeconds);
+                .withWaitTimeSeconds(pollWaitTimeInSeconds);
 
         List<Message> messages = amazonSQSClient.receiveMessage(receiveMessageRequest).getMessages();
 
