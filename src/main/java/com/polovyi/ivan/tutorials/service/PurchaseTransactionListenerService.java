@@ -1,7 +1,8 @@
 package com.polovyi.ivan.tutorials.service;
 
 import com.amazonaws.services.sqs.AmazonSQS;
-import com.amazonaws.services.sqs.model.DeleteMessageRequest;
+import com.amazonaws.services.sqs.model.DeleteMessageBatchRequest;
+import com.amazonaws.services.sqs.model.DeleteMessageBatchRequestEntry;
 import com.amazonaws.services.sqs.model.Message;
 import com.amazonaws.services.sqs.model.ReceiveMessageRequest;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -69,7 +70,10 @@ public class PurchaseTransactionListenerService {
 
             List<Message> processed = messages.stream()
                     .filter(m -> Boolean.parseBoolean(m.getAttributes().get("processed"))).toList();
-            processed.forEach(this::deleteMessage);
+
+            deleteMessagesBatch(processed);
+
+            //processed.forEach(this::deleteMessage);
         }
 
         log.info("{}<<<<<<Finished processing of {} message(s)>>>>>>"
@@ -108,12 +112,23 @@ public class PurchaseTransactionListenerService {
         loyaltyClient.createRewardPoints(createRewardPointsRequest);
     }
 
-    private void deleteMessage(Message message) {
-        log.info("Deleting message with id {}", message.getMessageId());
-        amazonSQSClient.deleteMessage(
-                new DeleteMessageRequest(tutorialSQS, message
-                        .getReceiptHandle()));
-        log.info("Message with id {} successfully  deleted.", message.getMessageId());
+    private void deleteMessagesBatch(List<Message> messages) {
+        log.info("Deleting {} message(s)", messages.size());
+        List<DeleteMessageBatchRequestEntry> entries = messages.stream()
+                .map(msg -> new DeleteMessageBatchRequestEntry(msg.getMessageId(), msg.getReceiptHandle()))
+                .collect(Collectors.toList());
+        amazonSQSClient.deleteMessageBatch(new DeleteMessageBatchRequest(tutorialSQS, entries));
     }
+
+    /*
+    First version. Improved with a method deleteMessagesBatch after comment in th blog.
+     */
+    //    private void deleteMessage(Message message) {
+    //        log.info("Deleting message with id {}", message.getMessageId());
+    //        amazonSQSClient.deleteMessage(
+    //                new DeleteMessageRequest(tutorialSQS, message
+    //                        .getReceiptHandle()));
+    //        log.info("Message with id {} successfully  deleted.", message.getMessageId());
+    //    }
 
 }
