@@ -46,7 +46,7 @@ public class PurchaseTransactionListenerService {
     private ObjectMapper mapper = new ObjectMapper()
             .registerModule(new JavaTimeModule());
 
-    @Scheduled(fixedRateString = "${cloud.aws.sqs.fixed-poll-rate}")
+    @Scheduled(fixedDelayString = "${cloud.aws.sqs.fixed-poll-rate}")
     public void messageInBatchListener() {
         ReceiveMessageRequest receiveMessageRequest = new ReceiveMessageRequest(
                 tutorialSQS)
