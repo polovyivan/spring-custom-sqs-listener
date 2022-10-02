@@ -3,6 +3,8 @@ package com.polovyi.ivan.tutorials.service;
 import com.amazonaws.services.sqs.AmazonSQS;
 import com.amazonaws.services.sqs.model.DeleteMessageBatchRequest;
 import com.amazonaws.services.sqs.model.DeleteMessageBatchRequestEntry;
+import com.amazonaws.services.sqs.model.DeleteMessageBatchResult;
+import com.amazonaws.services.sqs.model.DeleteMessageRequest;
 import com.amazonaws.services.sqs.model.Message;
 import com.amazonaws.services.sqs.model.ReceiveMessageRequest;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -117,7 +119,18 @@ public class PurchaseTransactionListenerService {
         List<DeleteMessageBatchRequestEntry> entries = messages.stream()
                 .map(msg -> new DeleteMessageBatchRequestEntry(msg.getMessageId(), msg.getReceiptHandle()))
                 .collect(Collectors.toList());
-        amazonSQSClient.deleteMessageBatch(new DeleteMessageBatchRequest(tutorialSQS, entries));
+
+        // batch delete can return success, but individual messages can fail, we have to retry failed messages
+        DeleteMessageBatchResult deleteMessageBatchResult = amazonSQSClient.deleteMessageBatch(
+                new DeleteMessageBatchRequest(tutorialSQS, entries));
+
+
+        log.info("Failed to batch delete {} message(s).", deleteMessageBatchResult.getFailed().size());
+        deleteMessageBatchResult.getFailed()
+                .forEach(m -> amazonSQSClient.deleteMessage(new DeleteMessageRequest(tutorialSQS, messages.get(Integer
+                                .parseInt(m.getId()))
+                        .getReceiptHandle())));
+
     }
 
     /*
